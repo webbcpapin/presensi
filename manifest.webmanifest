@@ -1,0 +1,26 @@
+{
+  "id": "./",
+  "name": "Presensi BC Papin",
+  "short_name": "Presensi Papin",
+  "description": "Sistem Presensi Digital KPPBC TMP C Pangkalpinang",
+  "lang": "id",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1e3c72",
+  "icons": [
+    {
+      "src": "./icons/presensi-192.png?v=1",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/presensi-512.png?v=1",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
