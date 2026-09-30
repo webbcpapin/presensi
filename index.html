@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="id">
+<head><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Presensi PPNPN - KPPBC Pangkalpinang</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-gradient(135deg,#1e3c72 0%,#2a5298 100%);min-height:100vh;padding:15px}
+        .container{max-width:800px;margin:0 auto}
+        .header{text-align:center;color:white;margin-bottom:20px;padding:20px;background:rgba(255,255,255,0.1);border-radius:15px}
+        .header h1{font-size:24px;margin-bottom:5px}
+        .card{background:white;border-radius:15px;padding:20px;margin-bottom:15px;box-shadow:0 10px 30px rgba(0,0,0,0.2)}
+        .form-group{margin-bottom:15px}
+        label{display:block;margin-bottom:5px;color:#333;font-weight:600;font-size:14px}
+        input,select{width:100%;padding:12px;border:2px solid #e0e0e0;border-radius:10px;font-size:16px}
+        button{padding:12px 20px;border:none;border-radius:10px;font-size:14px;font-weight:bold;cursor:pointer;transition:all 0.3s}
+        button:disabled{opacity:0.6;cursor:not-allowed}
+        .btn-masuk{background:linear-gradient(135deg,#11998e,#38ef7d);color:white;width:100%;padding:15px;font-size:16px}
+        .btn-keluar{background:linear-gradient(135deg,#eb3349,#f45c43);color:white;width:100%;padding:15px;font-size:16px}
+        .btn-camera{background:#667eea;color:white;width:100%}
+        .btn-gray{background:#6c757d;color:white}
+        .clock{text-align:center;font-size:32px;font-weight:bold;color:#1e3c72;margin-bottom:5px}
+        .date{text-align:center;color:#666;margin-bottom:15px;font-size:14px}
+        .location-info{background:#f8f9fa;border-radius:10px;padding:15px;margin-bottom:15px;border-left:4px solid #1e3c72;font-size:13px}
+        .status{text-align:center;padding:12px;border-radius:10px;margin-bottom:15px;font-weight:600;display:none;font-size:14px}
+        .status.success{background:#d4edda;color:#155724;display:block}
+        .status.error{background:#f8d7da;color:#721c24;display:block}
+        .status.loading{background:#fff3cd;color:#856404;display:block}
+        video{width:100%;max-width:400px;border-radius:10px;display:none;background:#000;margin:10px auto}
+        .photo-preview{width:100%;max-width:400px;border-radius:10px;display:none;margin:10px auto;border:3px solid #1e3c72}
+        .action-buttons{display:flex;gap:10px;margin-top:15px}
+        .hidden{display:none!important}
+        .mode-switch{display:flex;justify-content:center;gap:10px;margin-bottom:20px}
+        .mode-btn{padding:10px 20px;border:none;border-radius:20px;font-size:14px;font-weight:bold;cursor:pointer;background:rgba(255,255,255,0.2);color:white;flex:1;max-width:150px}
+        .mode-btn.active{background:white;color:#1e3c72}
+        .pegawai-panel,.admin-panel{display:none}
+        .pegawai-panel.active,.admin-panel.active{display:block}
+        .riwayat-item{background:#f8f9fa;border-radius:10px;padding:12px;margin-bottom:8px;border-left:4px solid #1e3c72;font-size:13px}
+        .badge{padding:3px 10px;border-radius:15px;font-size:11px;font-weight:bold}
+        .badge-pramubakti{background:#e3f2fd;color:#1976d2}
+        .badge-cs{background:#fff3e0;color:#f57c00}
+        .badge-pkd{background:#f3e5f5;color:#7b1fa2}
+        .badge-magang{background:#e8f5e9;color:#2e7d32}
+        @media(max-width:600px){
+            .header h1{font-size:20px}
+            .clock{font-size:28px}
+            .action-buttons{flex-direction:column}
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏛️ Presensi PPNPN</h1>
+            <p>KPPBC TMP C Pangkalpinang</p>
+            <p style="font-size:12px;opacity:0.8;margin-top:5px">Sistem Presensi Digital v8.1</p>
+        </div>
+
+        <div class="mode-switch">
+            <button class="mode-btn active" onclick="switchMode('pegawai', this)">👤 Pegawai</button>
+            <button class="mode-btn" onclick="switchMode('admin', this)">🔐 Admin</button>
+        </div>
+
+        <!-- PANEL PEGAWAI -->
+        <div class="pegawai-panel active" id="pegawaiPanel">
+            <div class="card">
+                <div class="clock" id="clock">00:00:00</div>
+                <div class="date" id="date">-</div>
+
+                <div class="form-group">
+                    <label>Nama PPNPN / Peserta Magang <span style="color:red">*</span></label>
+                    <select id="namaPegawai" onchange="updateUraian()">
+                        <option value="">-- Pilih Nama --</option>
+                        <optgroup label="Pramubakti">
+                            <option value="Desi Susilowati" data-uraian="Pramubakti">Desi Susilowati</option>
+                            <option value="Sutiha Piko Sastra" data-uraian="Pramubakti">Sutiha Piko Sastra</option>
+                            <option value="Alsyanda Kaltsum Maghfira" data-uraian="Pramubakti">Alsyanda Kaltsum Maghfira</option>
+                        </optgroup>
+                        <optgroup label="Customer Service (CS)">
+                            <option value="Angga Trimulyanto" data-uraian="CS">Angga Trimulyanto</option>
+                            <option value="Arman" data-uraian="CS">Arman</option>
+                            <option value="Budi Ferry Christianto" data-uraian="CS">Budi Ferry Christianto</option>
+                            <option value="Katarina Sere" data-uraian="CS">Katarina Sere</option>
+                            <option value="Riswandi" data-uraian="CS">Riswandi</option>
+                        </optgroup>
+                        <optgroup label="PKD">
+                            <option value="Agus Heriyanto" data-uraian="PKD">Agus Heriyanto</option>
+                            <option value="Alim Akbar" data-uraian="PKD">Alim Akbar</option>
+                            <option value="Ferry Ferdiansyah" data-uraian="PKD">Ferry Ferdiansyah</option>
+                            <option value="Habibi" data-uraian="PKD">Habibi</option>
+                            <option value="M. Zayadi" data-uraian="PKD">M. Zayadi</option>
+                            <option value="Mardiansyah" data-uraian="PKD">Mardiansyah</option>
+                            <option value="Subir" data-uraian="PKD">Subir</option>
+                        </optgroup>
+                        <optgroup label="Magang - Universitas Bangka Belitung">
+                            <option value="Yolanda Octaviani" data-uraian="Magang">Yolanda Octaviani</option>
+                            <option value="Tasyah" data-uraian="Magang">Tasyah</option>
+                            <option value="Tirza Aulia" data-uraian="Magang">Tirza Aulia</option>
+                            <option value="Yogie Prayoga" data-uraian="Magang">Yogie Prayoga</option>
+                        </optgroup>
+                    </select>
+                    <input type="hidden" id="uraianPPNPN">
+                </div>
+
+                <div class="form-group">
+                    <label>📸 Foto Selfie (Wajib) <span style="color:red">*</span></label>
+                    <video id="video" autoplay playsinline muted></video>
+                    <img id="photoPreview" class="photo-preview" alt="Preview">
+                    <canvas id="canvas" style="display:none"></canvas>
+                    
+                    <div style="text-align:center;margin-top:10px">
+                        <button type="button" class="btn-camera" onclick="startCamera()" id="btnBuka">📷 Buka Kamera</button>
+                        <button type="button" class="btn-camera" onclick="takePhoto()" id="btnAmbil" style="display:none;background:#e83e8c">📸 Ambil Foto</button>
+                        <button type="button" class="btn-gray" onclick="retakePhoto()" id="btnUlang" style="display:none">🔄 Ulangi</button>
+                    </div>
+                    <p id="cameraStatus" style="font-size:12px;color:#666;text-align:center;margin-top:5px"></p>
+                </div>
+
+                <div class="location-info">
+                    <h3>📍 Informasi Lokasi <span style="color:red">*</span></h3>
+                    <p>Status: <span id="gpsStatus" style="font-weight:bold;color:#856404">Mendeteksi...</span></p>
+                    <p>Latitude: <span id="lat">-</span></p>
+                    <p>Longitude: <span id="lng">-</span></p>
+                    <p>Akurasi: <span id="akurasi">-</span></p>
+                    <p style="font-size:12px;color:#666;margin-top:5px">Alamat: <span id="alamat">Mendeteksi...</span></p>
+                    
+                    <div style="margin-top:10px;display:flex;gap:5px">
+                        <button type="button" onclick="retryGPS()" class="btn-gray" style="flex:1;font-size:12px">🔄 Cek Ulang GPS</button>
+                        <button type="button" onclick="setManualLocation()" class="btn-gray" style="flex:1;font-size:12px">📍 Manual</button>
+                    </div>
+                </div>
+
+                <div id="status" class="status"></div>
+
+                <div class="action-buttons">
+                    <button class="btn-masuk" id="btnMasuk" onclick="absen('masuk')">✅ ABSEN MASUK</button>
+                    <button class="btn-keluar" id="btnKeluar" onclick="absen('keluar')">🚪 ABSEN PULANG</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 style="margin-bottom:8px;color:#333">📋 Riwayat Absensi Saya</h3>
+                <p style="font-size:12px;color:#777;margin-bottom:12px">Riwayat pada perangkat ini. Data resmi tetap tersimpan di Google Sheet.</p>
+                <div id="riwayatList"></div>
+                <button class="btn-gray" onclick="updateRiwayat()" style="width:100%;margin-top:10px">🔄 Refresh Riwayat Lokal</button>
+            </div>
+        </div>
+
+        <!-- PANEL ADMIN -->
+        <div class="admin-panel" id="adminPanel">
+            <div class="card login-form" id="loginForm">
+                <h2 style="text-align:center;margin-bottom:20px;color:#1e3c72">🔐 Login Admin</h2>
+                <div class="form-group">
+                    <input type="text" id="adminUser" placeholder="Username">
+                </div>
+                <div class="form-group">
+                    <input type="password" id="adminPass" placeholder="Admin Token">
+                </div>
+                <button class="btn-gray" onclick="loginAdmin()" style="width:100%">Login</button>
+            </div>
+
+            <div id="adminDashboard" class="hidden">
+                <div class="card">
+                    <h3 style="margin-bottom:15px;color:#1e3c72">📊 Dashboard</h3>
+                    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:15px">
+                        <div style="background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:15px;border-radius:10px;text-align:center">
+                            <h3 id="statTotal" style="font-size:24px">0</h3><p>Total Pegawai</p>
+                        </div>
+                        <div style="background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:15px;border-radius:10px;text-align:center">
+                            <h3 id="statMasuk" style="font-size:24px">0</h3><p>Masuk Hari Ini</p>
+                        </div>
+                        <div style="background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:15px;border-radius:10px;text-align:center">
+                            <h3 id="statKeluar" style="font-size:24px">0</h3><p>Keluar Hari Ini</p>
+                        </div>
+                        <div style="background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:15px;border-radius:10px;text-align:center">
+                            <h3 id="statData" style="font-size:24px">0</h3><p>Total Records</p>
+                        </div>
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:15px">
+                        <input type="date" id="filterTanggal">
+                        <select id="filterUraian">
+                            <option value="">Semua Uraian</option>
+                            <option value="Pramubakti">Pramubakti</option>
+                            <option value="CS">CS</option>
+                            <option value="PKD">PKD</option>
+                            <option value="Magang">Magang - Universitas Bangka Belitung</option>
+                        </select>
+                        <input type="text" id="filterNama" placeholder="Cari nama...">
+                    </div>
+
+                    <div style="margin-bottom:15px;display:flex;gap:5px;flex-wrap:wrap">
+                        <button class="btn-gray" onclick="applyFilter()">🔍 Filter</button>
+                        <button class="btn-masuk" onclick="exportExcel()">📊 Export CSV</button>
+                        <button class="btn-gray" onclick="resetFilter()">🔄 Reset</button>
+                    </div>
+
+                    <div style="overflow-x:auto;margin-top:15px;font-size:13px">
+                        <table style="width:100%;border-collapse:collapse">
+                            <thead>
+                                <tr style="background:#1e3c72;color:white">
+                                    <th style="padding:10px;text-align:left">Tanggal</th>
+                                    <th style="padding:10px;text-align:left">Nama</th>
+                                    <th style="padding:10px;text-align:left">Uraian</th>
+                                    <th style="padding:10px;text-align:left">Masuk</th>
+                                    <th style="padding:10px;text-align:left">Keluar</th>
+                                    <th style="padding:10px;text-align:left">Durasi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <button class="btn-gray" onclick="logoutAdmin()" style="width:100%">🚪 Logout</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ═══════════════════════════════════════════════════════════════════
+        // KONFIGURASI
+        // ═══════════════════════════════════════════════════════════════════
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzuvR6zT4srKWGimJNfJ2t-OiJOIsSlZLuPlqz3Yq0sl0UsQ_vT5ur4_DzgrMtLvw0JUA/exec';
+        
+        const ADMIN_USERNAME = 'adminbcpapin';
+        // ═══════════════════════════════════════════════════════════════════
+
+        let presensiData = [];
+        let currentPosition = null;
+        let isAdminLoggedIn = false;
+        let adminToken = '';
+        let currentPhoto = null;
+        let cameraStream = null;
+
+        // Logging hanya ke console, tidak ke frontend
+        function debugLog(msg) {
+            console.log(`[Presensi v8.1] ${new Date().toLocaleTimeString()}: ${msg}`);
+        }
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').textContent = now.toLocaleTimeString('id-ID');
+            document.getElementById('date').textContent = now.toLocaleDateString('id-ID', {
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+            });
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        function updateUraian() {
+            const select = document.getElementById('namaPegawai');
+            const selected = select.options[select.selectedIndex];
+            const uraian = selected.getAttribute('data-uraian');
+            document.getElementById('uraianPPNPN').value = uraian || '';
+            updateRiwayat();
+        }
+
+        // KAMERA
+        async function startCamera() {
+            debugLog('Starting camera...');
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "user" }, 
+                    audio: false 
+                });
+                
+                const video = document.getElementById('video');
+                video.srcObject = cameraStream;
+                video.style.display = 'block';
+                
+                document.getElementById('btnBuka').style.display = 'none';
+                document.getElementById('btnAmbil').style.display = 'inline-block';
+                document.getElementById('cameraStatus').textContent = '✅ Kamera aktif';
+                
+                debugLog('Camera active');
+            } catch(err) {
+                debugLog('Camera error: ' + err.message);
+                showStatus('❌ Kamera error: ' + err.message, 'error');
+            }
+        }
+
+        function takePhoto() {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            const photoPreview = document.getElementById('photoPreview');
+            
+            canvas.width = video.videoWidth || 640;
+            canvas.height = video.videoHeight || 480;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            
+            currentPhoto = canvas.toDataURL('image/jpeg', 0.3);
+            
+            photoPreview.src = currentPhoto;
+            photoPreview.style.display = 'block';
+            video.style.display = 'none';
+            
+            document.getElementById('btnAmbil').style.display = 'none';
+            document.getElementById('btnUlang').style.display = 'inline-block';
+            document.getElementById('cameraStatus').textContent = '✅ Foto diambil (' + Math.round(currentPhoto.length/1024) + 'KB)';
+            
+            if(cameraStream) {
+                cameraStream.getTracks().forEach(t => t.stop());
+                cameraStream = null;
+            }
+            
+            debugLog('Photo taken: ' + Math.round(currentPhoto.length/1024) + 'KB');
+        }
+
+        function retakePhoto() {
+            currentPhoto = null;
+            document.getElementById('photoPreview').style.display = 'none';
+            document.getElementById('btnUlang').style.display = 'none';
+            startCamera();
+        }
+
+        // GPS
+        function initGPS() {
+            if(!navigator.geolocation) {
+                document.getElementById('gpsStatus').textContent = '❌ Tidak support';
+                return;
+            }
+            
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    currentPosition = pos;
+                    document.getElementById('lat').textContent = pos.coords.latitude.toFixed(6);
+                    document.getElementById('lng').textContent = pos.coords.longitude.toFixed(6);
+                    document.getElementById('akurasi').textContent = '±' + Math.round(pos.coords.accuracy) + 'm';
+                    document.getElementById('gpsStatus').textContent = '✅ Aktif';
+                    document.getElementById('gpsStatus').style.color = '#155724';
+                    
+                    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`)
+                        .then(r => r.json())
+                        .then(d => document.getElementById('alamat').textContent = d.display_name || '-')
+                        .catch(() => {});
+                    
+                    debugLog('GPS acquired: ' + pos.coords.latitude.toFixed(6) + ', ' + pos.coords.longitude.toFixed(6));
+                },
+                (err) => {
+                    document.getElementById('gpsStatus').textContent = '❌ Error';
+                    debugLog('GPS error: ' + err.message);
+                },
+                { enableHighAccuracy: true, timeout: 15000 }
+            );
+        }
+
+        function retryGPS() {
+            document.getElementById('gpsStatus').textContent = 'Retrying...';
+            initGPS();
+        }
+
+        function setManualLocation() {
+            currentPosition = {
+                coords: { latitude: -2.129, longitude: 106.113, accuracy: 10 }
+            };
+            document.getElementById('lat').textContent = '-2.129000';
+            document.getElementById('lng').textContent = '106.113000';
+            document.getElementById('akurasi').textContent = '±10m (Manual)';
+            document.getElementById('alamat').textContent = 'Kantor KPPBC (Manual)';
+            document.getElementById('gpsStatus').textContent = '✅ Manual';
+            document.getElementById('gpsStatus').style.color = '#155724';
+            debugLog('Manual location set');
+        }
+
+        // ═══════════════════════════════════════════════════════════════════
+        // LOAD DATA
+        // ═══════════════════════════════════════════════════════════════════
+        
+        async function loadData(token = adminToken) {
+            if(!token) return false;
+            debugLog('Loading admin data...');
+            try {
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+                    body: JSON.stringify({ action: 'getData', adminToken: token })
+                });
+                if(!response.ok) throw new Error('HTTP ' + response.status);
+                const result = await response.json();
+                if(result.status !== 'success') throw new Error(result.message || 'Gagal memuat data');
+                presensiData = Array.isArray(result.data) ? result.data : [];
+                debugLog('Loaded: ' + presensiData.length + ' records');
+                if(isAdminLoggedIn) updateDashboard();
+                return true;
+            } catch(error) {
+                debugLog('Load error: ' + error.message);
+                if(isAdminLoggedIn) showStatus('Gagal memuat data admin: ' + error.message, 'error');
+                return false;
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════════
+        // ABSEN
+        // ═══════════════════════════════════════════════════════════════════
+        
+        async function absen(tipe) {
+            const nama = document.getElementById('namaPegawai').value;
+            const uraian = document.getElementById('uraianPPNPN').value;
+            
+            if(!nama) return showStatus('❌ Pilih nama!', 'error');
+            if(!currentPosition) return showStatus('❌ GPS belum siap!', 'error');
+            if(!currentPhoto) return showStatus('❌ Foto belum diambil!', 'error');
+
+            const btn = document.getElementById(tipe === 'masuk' ? 'btnMasuk' : 'btnKeluar');
+            btn.disabled = true;
+            showStatus('Mengirim data...', 'loading');
+
+            const now = new Date();
+            
+            // Format YYYY-MM-DD
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const tanggal = `${year}-${month}-${day}`;
+            
+            const jam = now.toLocaleTimeString('id-ID', { hour12: false, hour: '2-digit', minute: '2-digit' });
+            const id = nama.replace(/\s+/g, '_') + '_' + tanggal;
+
+            debugLog('Processing absen ' + tipe + ' for ' + nama);
+
+            const payload = {
+                action: 'presensi',
+                id: id,
+                nama: nama,
+                uraian: uraian,
+                tanggal: tanggal,
+                tipe: tipe,
+                jam: jam,
+                lat: currentPosition.coords.latitude,
+                lng: currentPosition.coords.longitude,
+                akurasi: currentPosition.coords.accuracy,
+                alamat: document.getElementById('alamat').textContent,
+                foto: currentPhoto,
+                userAgent: navigator.userAgent.substring(0, 200)
+            };
+
+            // Kirim data ke Apps Script v8 sebagai simple request (tanpa CORS preflight).
+            try {
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+                    body: JSON.stringify(payload)
+                });
+
+                if(!response.ok) throw new Error('HTTP ' + response.status);
+                const result = await response.json();
+
+                if(result.status === 'success') {
+                    showStatus('✅ ' + result.message, 'success');
+                    saveLocalHistory({
+                        nama: nama,
+                        uraian: uraian,
+                        tanggal: result.tanggal || tanggal,
+                        tipe: tipe,
+                        jam: result.jam || jam,
+                        durasi: '-'
+                    });
+                    resetForm();
+                    updateRiwayat();
+                    if(isAdminLoggedIn) await loadData();
+                } else {
+                    showStatus('❌ ' + (result.message || 'Presensi gagal.'), 'error');
+                }
+            } catch(fetchError) {
+                debugLog('Fetch error: ' + fetchError.message);
+                showStatus('❌ Gagal terhubung ke server: ' + fetchError.message, 'error');
+            }
+            
+            btn.disabled = false;
+        }
+
+        function resetForm() {
+            currentPhoto = null;
+            document.getElementById('photoPreview').style.display = 'none';
+            document.getElementById('btnUlang').style.display = 'none';
+            document.getElementById('btnBuka').style.display = 'inline-block';
+            document.getElementById('cameraStatus').textContent = '';
+        }
+
+        function getLocalHistory() {
+            try { return JSON.parse(localStorage.getItem('presensiHistoryV8') || '[]'); }
+            catch (_) { return []; }
+        }
+
+        function saveLocalHistory(item) {
+            const list = getLocalHistory();
+            const key = item.nama + '|' + item.tanggal;
+            const idx = list.findIndex(x => (x.nama + '|' + x.tanggal) === key);
+            if(idx < 0) {
+                list.unshift({
+                    nama: item.nama, uraian: item.uraian, tanggal: item.tanggal,
+                    jamMasuk: item.tipe === 'masuk' ? item.jam : '-',
+                    jamKeluar: item.tipe === 'keluar' ? item.jam : '-', durasi: '-'
+                });
+            } else {
+                if(item.tipe === 'masuk') list[idx].jamMasuk = item.jam;
+                if(item.tipe === 'keluar') list[idx].jamKeluar = item.jam;
+            }
+            localStorage.setItem('presensiHistoryV8', JSON.stringify(list.slice(0, 60)));
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+        }
+
+        function badgeClass(uraian) {
+            const u = String(uraian || '').toLowerCase();
+            if(u.includes('pramubakti')) return 'badge-pramubakti';
+            if(u === 'cs' || u.includes('customer')) return 'badge-cs';
+            if(u.includes('pkd')) return 'badge-pkd';
+            if(u.includes('magang')) return 'badge-magang';
+            return 'badge-cs';
+        }
+
+        function updateRiwayat() {
+            const nama = document.getElementById('namaPegawai').value;
+            const container = document.getElementById('riwayatList');
+            if(!nama) {
+                container.innerHTML = '<p style="text-align:center;color:#999">Pilih nama untuk melihat riwayat lokal</p>';
+                return;
+            }
+            const myData = getLocalHistory().filter(p => String(p.nama || '').toLowerCase().trim() === nama.toLowerCase().trim())
+                .sort((a,b) => String(b.tanggal || '').localeCompare(String(a.tanggal || '')));
+            if(myData.length === 0) {
+                container.innerHTML = '<p style="text-align:center;color:#999">Belum ada riwayat pada perangkat ini</p>';
+                return;
+            }
+            container.innerHTML = myData.map(item => {
+                const hasKeluar = item.jamKeluar && item.jamKeluar !== '-';
+                const borderColor = hasKeluar ? '#eb3349' : '#11998e';
+                return `<div class="riwayat-item" style="border-left-color:${borderColor}">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+                        <strong>${escapeHtml(item.tanggal)}</strong>
+                        <span class="badge ${badgeClass(item.uraian)}">${escapeHtml(item.uraian)}</span>
+                    </div>
+                    <div style="font-size:12px">🌅 Masuk: <strong>${escapeHtml(item.jamMasuk || '-')}</strong> | 🌙 Pulang: <strong>${escapeHtml(item.jamKeluar || '-')}</strong></div>
+                </div>`;
+            }).join('');
+        }
+
+        function showStatus(msg, type) {
+            const el = document.getElementById('status');
+            el.textContent = msg;
+            el.className = 'status ' + type;
+            if(type !== 'loading') setTimeout(() => el.className = 'status', 8000);
+        }
+
+        function switchMode(mode, button) {
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            if(button) button.classList.add('active');
+            document.querySelectorAll('.pegawai-panel, .admin-panel').forEach(p => p.classList.remove('active'));
+            document.getElementById(mode + 'Panel').classList.add('active');
+        }
+
+        async function loginAdmin() {
+            const user = document.getElementById('adminUser').value.trim();
+            const token = document.getElementById('adminPass').value.trim();
+            if(user !== ADMIN_USERNAME || !token) {
+                alert('Username atau Admin Token belum sesuai.');
+                return;
+            }
+            const btn = document.querySelector('#loginForm button');
+            btn.disabled = true;
+            const ok = await loadData(token);
+            btn.disabled = false;
+            if(!ok) {
+                alert('Admin Token ditolak atau backend tidak dapat diakses.');
+                return;
+            }
+            adminToken = token;
+            isAdminLoggedIn = true;
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('adminDashboard').classList.remove('hidden');
+            updateDashboard();
+        }
+
+        function logoutAdmin() {
+            isAdminLoggedIn = false;
+            adminToken = '';
+            presensiData = [];
+            document.getElementById('adminPass').value = '';
+            document.getElementById('loginForm').classList.remove('hidden');
+            document.getElementById('adminDashboard').classList.add('hidden');
+        }
+
+        function updateDashboard() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            const todayStr = `${year}-${month}-${day}`;
+            
+            const todayData = presensiData.filter(p => p.tanggal === todayStr);
+            const uniqueNames = new Set(presensiData.map(p => p.nama).filter(n => n));
+            
+            document.getElementById('statTotal').textContent = uniqueNames.size;
+            document.getElementById('statMasuk').textContent = todayData.filter(p => p.jamMasuk && p.jamMasuk !== '-' && p.jamMasuk !== '').length;
+            document.getElementById('statKeluar').textContent = todayData.filter(p => p.jamKeluar && p.jamKeluar !== '-' && p.jamKeluar !== '').length;
+            document.getElementById('statData').textContent = presensiData.length;
+            
+            renderTable(presensiData);
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('tableBody');
+            if(!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center">Tidak ada data</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = data.sort((a,b) => (b.tanggal || '').localeCompare(a.tanggal || '')).map(item => `
+                <tr style="border-bottom:1px solid #ddd">
+                    <td style="padding:10px">${escapeHtml(item.tanggal)}</td>
+                    <td style="padding:10px">${escapeHtml(item.nama)}</td>
+                    <td style="padding:10px"><span class="badge ${badgeClass(item.uraian)}">${escapeHtml(item.uraian)}</span></td>
+                    <td style="padding:10px">${escapeHtml(item.jamMasuk || '-')}</td>
+                    <td style="padding:10px">${escapeHtml(item.jamKeluar || '-')}</td>
+                    <td style="padding:10px">${escapeHtml(item.durasi || '-')}</td>
+                </tr>
+            `).join('');
+        }
+
+        function applyFilter() {
+            const tgl = document.getElementById('filterTanggal').value;
+            const uraian = document.getElementById('filterUraian').value;
+            const nama = document.getElementById('filterNama').value.toLowerCase();
+            
+            let filtered = presensiData;
+            if(tgl) filtered = filtered.filter(p => p.tanggal === tgl);
+            if(uraian) filtered = filtered.filter(p => p.uraian === uraian);
+            if(nama) filtered = filtered.filter(p => p.nama && p.nama.toLowerCase().includes(nama));
+            
+            renderTable(filtered);
+        }
+
+        function resetFilter() {
+            document.getElementById('filterTanggal').value = '';
+            document.getElementById('filterUraian').value = '';
+            document.getElementById('filterNama').value = '';
+            renderTable(presensiData);
+        }
+
+        function exportExcel() {
+            let csv = '\uFEFFNo,Nama,Uraian,Tanggal,Jam Masuk,Jam Keluar,Durasi\n';
+            presensiData.forEach((item, i) => {
+                csv += `${i+1},"${item.nama}",${item.uraian},${item.tanggal},${item.jamMasuk || '-'},${item.jamKeluar || '-'},${item.durasi || '-'}\n`;
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'Rekap_Presensi_' + new Date().toISOString().split('T')[0] + '.csv';
+            link.click();
+        }
+
+        // INIT
+        document.addEventListener('DOMContentLoaded', () => {
+            debugLog('App v8.1 initialized');
+            initGPS();
+            updateRiwayat();
+        });
+    </script>
+</body>
+</html>
