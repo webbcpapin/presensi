@@ -51,6 +51,7 @@
         .badge-cs{background:#fff3e0;color:#f57c00}
         .badge-pkd{background:#f3e5f5;color:#7b1fa2}
         .badge-magang{background:#e8f5e9;color:#2e7d32}
+        .badge-pkl{background:#e0f7fa;color:#00796b}
         @media(max-width:600px){
             .header h1{font-size:20px}
             .clock{font-size:28px}
@@ -78,7 +79,7 @@
                 <div class="date" id="date">-</div>
 
                 <div class="form-group">
-                    <label>Nama PPNPN / Peserta Magang <span style="color:red">*</span></label>
+                    <label>Nama PPNPN / Peserta Magang / PKL <span style="color:red">*</span></label>
                     <select id="namaPegawai" onchange="updateUraian()">
                         <option value="">-- Pilih Nama --</option>
                         <optgroup label="Pramubakti">
@@ -107,6 +108,13 @@
                             <option value="Tasyah" data-uraian="Magang">Tasyah</option>
                             <option value="Tirza Aulia" data-uraian="Magang">Tirza Aulia</option>
                             <option value="Yogie Prayoga" data-uraian="Magang">Yogie Prayoga</option>
+                        </optgroup>
+                        <optgroup label="PKL - SMKN 1 Pangkalpinang">
+                            <option value="CERIA MUETIA RAHMA" data-uraian="PKL">CERIA MUETIA RAHMA</option>
+                            <option value="AURELLIA CLARISSA QUEENA" data-uraian="PKL">AURELLIA CLARISSA QUEENA</option>
+                            <option value="JESSICA CLARISSA SANJAYA" data-uraian="PKL">JESSICA CLARISSA SANJAYA</option>
+                            <option value="KAYLA SANJU RAHMADITI" data-uraian="PKL">KAYLA SANJU RAHMADITI</option>
+                            <option value="SYAPIRA BILBINA" data-uraian="PKL">SYAPIRA BILBINA</option>
                         </optgroup>
                     </select>
                     <input type="hidden" id="uraianPPNPN">
@@ -195,6 +203,7 @@
                             <option value="CS">CS</option>
                             <option value="PKD">PKD</option>
                             <option value="Magang">Magang - Universitas Bangka Belitung</option>
+                            <option value="PKL">PKL - SMKN 1 Pangkalpinang</option>
                         </select>
                         <input type="text" id="filterNama" placeholder="Cari nama...">
                     </div>
@@ -519,6 +528,7 @@
             if(u === 'cs' || u.includes('customer')) return 'badge-cs';
             if(u.includes('pkd')) return 'badge-pkd';
             if(u.includes('magang')) return 'badge-magang';
+            if(u.includes('pkl')) return 'badge-pkl';
             return 'badge-cs';
         }
 
